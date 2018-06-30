@@ -5,6 +5,7 @@ import json
 from ProPresenterStageDisplayClientComms import ProPresenterStageDisplayClientComms
 import Tkinter as tk
 import time
+import datetime
 
 __author__ = "Anthony Eden"
 __copyright__ = "Copyright 2017-2018, Anthony Eden / Media Realm"
@@ -29,6 +30,11 @@ class Application(tk.Frame):
     labelCurrent = None
     labelNext = None
     labelClock = None
+
+    # Clock settings
+    startedAt = None
+    shouldEndAt = None
+    RemainingMinutes = 0
     
     # Store the last time string
     time_last = ""
@@ -111,6 +117,9 @@ class Application(tk.Frame):
             self.fontSizeClock = int(ConfigData['FontSizeClock'])
             self.fontSizeCurrent = int(ConfigData['FontSizeCurrent'])
             self.fontSizeNext = int(ConfigData['FontSizeNext'])
+
+            self.RemainingMinutes = int(ConfigData['RemainingMinutes'])
+
 
             if "LowerThirdMode" in ConfigData and ConfigData['LowerThirdMode'] is True:
                 self.modeLowerThird = True
@@ -428,7 +437,7 @@ class Application(tk.Frame):
         if self.labelClock is None:
             return False
 
-        time_now = time.strftime('%I:%M:%S %p')
+        time_now = time.strftime('%H:%M:%S')
         
         # Update the timer on screen when the timer has incremented
         if time_now != self.time_last:
@@ -451,9 +460,42 @@ class Application(tk.Frame):
         if self.labelCurrent is not None:
             self.labelCurrent.after(100, self.updatetext_tick)
 
+    def updatetimer_tick(self):
+        # Update text from the main thread (to try and avoid redraw issues)
+
+        if self.startedAt is None:
+            self.startedAt = datetime.datetime.now()
+            if self.shouldEndAt is None:
+                self.shouldEndAt = self.startedAt + datetime.timedelta(minutes = self.RemainingMinutes)
+
+        now = datetime.datetime.now()
+
+        timeElepsed = int((now-self.startedAt).total_seconds())
+        timeRemaining = int((self.shouldEndAt-now).total_seconds())
+        
+        if timeRemaining < 0:
+            timeRemaining = 0
+
+        minsE, secsE = divmod(timeElepsed, 60)
+        minsR, secsR = divmod(timeRemaining, 60)
+        self.nextText = '{:02d}:{:02d}'.format(minsE, secsE)
+        self.currentText = '{:02d}:{:02d}'.format(minsR, secsR)
+
+        if self.labelCurrent is not None:
+            self.labelCurrent.configure(text = self.currentText)
+            self.update_idletasks()
+        
+        if self.labelNext is not None:
+            self.labelNext.configure(text = self.nextText)
+            self.update_idletasks()
+
+        if self.labelCurrent is not None:
+            self.labelCurrent.after(200, self.updatetimer_tick)
+
+
 if __name__ == "__main__":
     app = Application()
     app.master.title('ProPresenter Stage Display')
     app.clock_tick()
-    app.updatetext_tick()
+    app.updatetimer_tick()
     app.mainloop()
