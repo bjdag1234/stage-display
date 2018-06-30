@@ -90,7 +90,7 @@ class Application(tk.Frame):
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.focus_set()
         self.root.attributes('-fullscreen', True)
-        self.root.bind('<KeyPress>', self.close)
+        self.root.bind('<Escape>', self.close)
         self.root.config(cursor = 'none')
         
         # Get the config from JSON
