@@ -83,16 +83,7 @@ class Application(tk.Frame):
     tryReconnect = False
     disconnectTime = 0
 
-    def __init__(self, master = None):
-        # Setup the application and display window
-        
-        self.root = tk.Tk()
-        self.root.protocol("WM_DELETE_WINDOW", self.close)
-        self.root.focus_set()
-        self.root.attributes('-fullscreen', True)
-        self.root.bind('<Escape>', self.close)
-        self.root.config(cursor = 'none')
-        
+    def bootstrapConfig(self, extra = None):
         # Get the config from JSON
         try:
             ConfigData_Filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")
@@ -181,13 +172,28 @@ class Application(tk.Frame):
             
             exit()
 
+
+    def __init__(self, master = None):
+        # Setup the application and display window
+        
+        self.root = tk.Tk()
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
+        self.root.focus_set()
+        self.root.attributes('-fullscreen', True)
+        self.root.bind('<Escape>', self.close)
+        self.root.bind('<r>', self.resetTimer)
+        self.root.bind('<c>', self.clearTimer)
+        self.root.config(cursor = 'none')
+        
+        self.bootstrapConfig()
+
         if self.modeLowerThird:
             self.setupMainInterface_LowerThird()
         else:
             self.setupMainInterface()
 
-        self.connect()
-        self.reconnect_tick()
+        # self.connect()
+        # self.reconnect_tick()
 
     def connect(self):
         # Connect to ProPresenter and setup the necessary callbacks
@@ -425,6 +431,17 @@ class Application(tk.Frame):
         else:
             self.nextText = ""
     
+    def clearTimer(self, extra = None):
+        self.RemainingMinutes = 0
+        self.startedAt = None
+        self.shouldEndAt = None
+
+    def resetTimer(self, extra = None):
+        self.bootstrapConfig()
+        self.startedAt = None
+        self.shouldEndAt = None
+
+
     def close(self, extra = None):
         # Terminate the application
         if self.ProPresenter is not None:
